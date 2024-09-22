@@ -77,4 +77,4 @@ userSchema.methods.generateRefreshTocken=function(){
         expiresIn:process.env.process.REFRESH_TOCKEN_EXPIRY
     })
 }
-export const Uaer= mongoose.model("User",userSchema)
+export const User= mongoose.model("User",userSchema)
