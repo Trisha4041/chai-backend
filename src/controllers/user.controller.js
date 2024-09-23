@@ -9,31 +9,37 @@ const registerUser=asyncHandler(async (req,res)=>{
     if ([fullName,email,username,password].some((field)=>field?.trim()==="")){
         throw new ApiError(400,"Full name is required")
     }
-    const existedtUser=User.findOne({
+    const existedUser=await User.findOne({
         $or:[{username},{email}]
     })
-    if(existedtUser){
+    if(existedUser){
         throw new ApiError(409,"User with email or username exist")
     }
     const avatarLocalPath=req.files?.avatar[0]?.path;
-    const coverImageLocalPath=req.files?.coverImage[0]?.path;
+    //const coverImageLocalPath=req.files?.coverImage[0]?.path;
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+    }
+
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar file is require");
     }
     const avatar=await uploadOnCloudinary(avatarLocalPath)
-    const coverImage=await uploadOnCloudinary(coverImageLocalPath)
+    const coverImage = coverImageLocalPath ? await uploadOnCloudinary(coverImageLocalPath) : null;
+
     if(!avatar){
         throw new ApiError(400,"Avatar file is require");
     }
     const user=await User.create({
         fullName,
         avatar:avatar.url,
-        coverImage:coverImage.url || "",
+        coverImage: coverImage?.url || "",
         email,
         password,
         username:username.toLowerCase()
     })
-    const createdUser=await User.findbyId(user._id).select(
+    const createdUser=await User.findById(user._id).select(
         "-password -refreshTocken" 
     )
     if(!createdUser){
